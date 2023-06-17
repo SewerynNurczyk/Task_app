@@ -8,19 +8,23 @@ const App = () => {
   const [newTask, setNewTask] = useState("");
 
   useEffect(() => {
-    const socket = io("http://localhost:8000");
-    setSocket(socket);
-    socket.on("updateData", (tasks) => {
-      updateTasks(tasks);
-    });
 
-    socket.on("removeTask", (id) => {
-      removeTask(id);
-    });
-    socket.on("addTask", (task) => {
-      addTask(task);
-    });
-  }, []);
+    if (!socket) {
+      const _socket = io("http://localhost:8000");
+      setSocket(_socket);
+      _socket.on("updateData", (tasks) => {
+        updateTasks(tasks);
+      });
+
+      _socket.on("removeTask", (id) => {
+        removeTask(id);
+      });
+
+      _socket.on("addTask", (task) => {
+        addTask(task);
+      });
+    }
+  }, [socket]);
 
   const addTask = (task) => {
     setTasks((tasks) => [...tasks, task]);
@@ -33,7 +37,7 @@ const App = () => {
 
   const removeTask = (taskId, isLocal) => {
     setTasks((tasks) => tasks.filter((task) => task.id !== taskId));
-    if (isLocal) {
+    if (isLocal && socket) {
       socket.emit("removeTask", taskId);
     }
   };
@@ -42,7 +46,9 @@ const App = () => {
     e.preventDefault();
     const task = { name: newTask, id: shortid.generate() };
     addTask(task);
+    if (socket) {
     socket.emit("addTask", task);
+    }
   };
   return (
     <div className="App">
